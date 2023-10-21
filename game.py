@@ -18,7 +18,12 @@ ORANGE = (255, 165, 0)
 BLACK = (0, 0, 0)
 PURPLE = (128, 0, 128)
 GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+
 HALLOWEEN_COLORS = [ORANGE, PURPLE, GREEN]
+
+audio_on = True
+difficulty = "Medium"
 
 def draw_grid(highlighted_cells=[]):
     for x in range(GRID_SIZE):
@@ -33,9 +38,62 @@ def draw_grid(highlighted_cells=[]):
 def get_cell_position(mouse_x, mouse_y):
     return mouse_x // CELL_SIZE, mouse_y // CELL_SIZE
 
+def draw_text(text, size, x, y, color):
+    font = pygame.font.Font(None, size)
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=(x, y))
+    screen.blit(text_surface, text_rect)
+    return text_rect
+
+def start_screen():
+    global audio_on, difficulty
+
+    #Adds and loads halloween horror logo image
+    logo_image = pygame.image.load('halloween_horror_logo.png')
+    logo_image = pygame.transform.scale(logo_image, (int(WIDTH * 0.8), int(HEIGHT * 0.4)))
+    logo_rect = logo_image.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+
+    start_game = False
+    while not start_game:
+        screen.fill(BLACK)
+
+        # Logo in start menu
+        screen.blit(logo_image, logo_rect.topleft)
+
+        start_button = draw_text("Start", 40, WIDTH // 2, HEIGHT * 3 // 4, WHITE)
+        exit_button = draw_text("Exit", 40, WIDTH // 2, HEIGHT * 3 // 4 + 50, WHITE)
+        audio_button = draw_text(f"Audio: {'On' if audio_on else 'Off'}", 40, WIDTH // 2, HEIGHT * 3 // 4 - 50, WHITE)
+        difficulty_button = draw_text(f"Difficulty: {difficulty}", 40, WIDTH // 2, HEIGHT * 3 // 4 - 100, WHITE)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if start_button.collidepoint((x, y)):
+                    start_game = True
+                elif exit_button.collidepoint((x, y)):
+                    pygame.quit()
+                    return
+                elif audio_button.collidepoint((x, y)):
+                    audio_on = not audio_on
+                elif difficulty_button.collidepoint((x, y)):
+                    if difficulty == "Easy":
+                        difficulty = "Medium"
+                    elif difficulty == "Medium":
+                        difficulty = "Hard"
+                    else:
+                        difficulty = "Easy"
+
+
 #Loop
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Halloween Horror")
+
+start_screen()
 
 running = True
 sequence = [(random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1)) for _ in range(SEQUENCE_LENGTH)]
