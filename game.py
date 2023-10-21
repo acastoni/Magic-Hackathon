@@ -4,7 +4,7 @@ import time
 
 pygame.init()
 
-#Version 1.0
+
 # Our variables, subject to change
 WIDTH, HEIGHT = 640, 640
 GRID_SIZE = 4
@@ -21,6 +21,10 @@ GREEN = (0, 255, 0)
 WHITE = (255, 255, 255)
 
 HALLOWEEN_COLORS = [ORANGE, PURPLE, GREEN]
+
+#Adding highscore:
+
+high_score = 0
 
 audio_on = True
 difficulty = "Medium"
@@ -47,7 +51,7 @@ def draw_text(text, size, x, y, color):
 
 def start_screen():
     global audio_on, difficulty
-
+    
     #Adds and loads halloween horror logo image
     logo_image = pygame.image.load('halloween_horror_logo.png')
     logo_image = pygame.transform.scale(logo_image, (int(WIDTH * 0.8), int(HEIGHT * 0.4)))
@@ -89,6 +93,12 @@ def start_screen():
                         difficulty = "Easy"
 
 
+def display_score():
+    global difficulty
+    global audio_on
+    draw_text(f"Score: {score}", 30, WIDTH // 4, 30, WHITE)
+    draw_text(f"High Score: {high_score}", 30, 3 * WIDTH // 4, 30, WHITE)
+
 #Loop
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Halloween Horror")
@@ -103,8 +113,38 @@ score = 0
 
 show_sequence = True
 
+clock = pygame.time.Clock()  # Initialize the clock
+
+
+def game_over_screen():
+    """Show a game over screen until the user decides to start again or exit."""
+    screen.fill(BLACK)
+    draw_text("GAME OVER", 50, WIDTH // 2, HEIGHT // 2, ORANGE)
+    restart_button = draw_text("Restart", 40, WIDTH // 2, HEIGHT * 3 // 4, WHITE)
+    exit_button = draw_text("Exit", 40, WIDTH // 2, HEIGHT * 3 // 4 + 50, WHITE)
+
+    pygame.display.flip()
+
+    waiting_for_decision = True
+    while waiting_for_decision:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if restart_button.collidepoint((x, y)):
+                    waiting_for_decision = False
+                elif exit_button.collidepoint((x, y)):
+                    pygame.quit()
+                    return
+
+#Main game loop
+
 while running:
     screen.fill(BLACK)
+    display_score()
+    current_time = pygame.time.get_ticks()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -116,31 +156,39 @@ while running:
             if len(user_sequence) == SEQUENCE_LENGTH:
                 if user_sequence == sequence:
                     score += 1
+                    if score > high_score:
+                        high_score = score
                     SEQUENCE_LENGTH += 1  # Increase sequence length
                     print(f"Correct Sequence! Score: {score}")
                     DISPLAY_TIME = max(0.1, DISPLAY_TIME - 0.1)  # Decrement DISPLAY_TIME, ensuring it doesn't go below 0.1
                 else:
-                    print(f"Wrong Sequence! Score: {score}")
+                    game_over_screen()
+                    score = 0  # Reset score to zero if sequence is incorrect
+                    SEQUENCE_LENGTH = 2
+                    DISPLAY_TIME = 1
+                    print(f"Wrong Sequence! Score reset to zero.")
+                last_update_time = pygame.time.get_ticks()  # Reset these two values
+                update_delay = DISPLAY_TIME * 1000
                 sequence = [(random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1)) for _ in range(SEQUENCE_LENGTH)]
                 user_sequence = []
                 show_sequence = True
 
+    
+    
     # Game Visuals
+    # Inside the game loop:
+
     if show_sequence:
-        if current_index < SEQUENCE_LENGTH:
-            draw_grid([sequence[current_index]])
-            pygame.display.flip()
-            time.sleep(DISPLAY_TIME)
-            current_index += 1
-            draw_grid([])
-            pygame.display.flip()
-            time.sleep(0.3)
-        else:
-            current_index = 0
-            show_sequence = False
+            # Simply draw and pause for DISPLAY_TIME seconds for each cell in the sequence
+            for cell in sequence:
+                draw_grid([cell])
+                pygame.display.flip()  # Update the display after drawing each cell
+                time.sleep(DISPLAY_TIME)  # Wait for DISPLAY_TIME seconds
+            show_sequence = False  # After showing the entire sequence, set this to False
+            user_sequence = []  # Prepare to receive the user's input
     else:
-        draw_grid(user_sequence)
+        draw_grid(user_sequence)  # Draw user's current sequence
 
+    display_score()
     pygame.display.flip()
-
-pygame.quit()
+    clock.tick(60)
