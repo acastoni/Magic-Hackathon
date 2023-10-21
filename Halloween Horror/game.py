@@ -3,6 +3,16 @@ import random
 import time
 
 pygame.init()
+pygame.mixer.init()
+audio_on = True
+#Adding Sounds:
+correct_sound = pygame.mixer.Sound('correct.wav')
+wrong_sound = pygame.mixer.Sound('wrong.wav')
+
+if audio_on is True:
+    pygame.mixer.music.load('spooky_8bit.wav')
+    pygame.mixer.music.set_volume(0.15)  # 30% of the maximum volume
+    pygame.mixer.music.play(-1)
 
 
 # Our variables, subject to change
@@ -26,8 +36,24 @@ HALLOWEEN_COLORS = [ORANGE, PURPLE, GREEN]
 
 high_score = 0
 
-audio_on = True
+
 difficulty = "Medium"
+
+def generate_new_cell(last_cell=None):
+    new_cell = (random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1))
+    while new_cell == last_cell:
+        new_cell = (random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1))
+    return new_cell
+
+#pumpkin art
+pumpkin_image = pygame.image.load('carved_pumpkin.png')
+scaled_pumpkin = pygame.transform.scale(pumpkin_image, (CELL_SIZE, CELL_SIZE))
+
+purple_ghost_image = pygame.image.load('purple_ghost.png')
+scaled_ghost = pygame.transform.scale(purple_ghost_image, (CELL_SIZE, CELL_SIZE))
+
+green_tombstone_image = pygame.image.load('green_tomb.png')
+scaled_tombstone = pygame.transform.scale(green_tombstone_image, (CELL_SIZE, CELL_SIZE))
 
 def draw_grid(highlighted_cells=[]):
     for x in range(GRID_SIZE):
@@ -38,6 +64,16 @@ def draw_grid(highlighted_cells=[]):
             pygame.draw.rect(screen, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
             pygame.draw.line(screen, BLACK, (x * CELL_SIZE, 0), (x * CELL_SIZE, HEIGHT))
             pygame.draw.line(screen, BLACK, (0, y * CELL_SIZE), (WIDTH, y * CELL_SIZE))
+            
+            if color == ORANGE:
+                screen.blit(scaled_pumpkin, (x * CELL_SIZE, y * CELL_SIZE))
+            
+            if color == PURPLE:
+                screen.blit(scaled_ghost, (x * CELL_SIZE, y * CELL_SIZE))
+            
+            if color == GREEN:
+                screen.blit(scaled_tombstone, (x * CELL_SIZE, y * CELL_SIZE))
+
 
 def get_cell_position(mouse_x, mouse_y):
     return mouse_x // CELL_SIZE, mouse_y // CELL_SIZE
@@ -54,8 +90,10 @@ def start_screen():
     
     #Adds and loads halloween horror logo image
     logo_image = pygame.image.load('halloween_horror_logo.png')
-    logo_image = pygame.transform.scale(logo_image, (int(WIDTH * 0.8), int(HEIGHT * 0.4)))
+    logo_image = pygame.transform.scale(logo_image, (int(WIDTH * 0.7), int(HEIGHT * 0.5)))
     logo_rect = logo_image.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+
+
 
     start_game = False
     while not start_game:
@@ -84,6 +122,10 @@ def start_screen():
                     return
                 elif audio_button.collidepoint((x, y)):
                     audio_on = not audio_on
+                    if audio_on:
+                        pygame.mixer.music.play(-1)
+                    else:
+                        pygame.mixer.music.stop()
                 elif difficulty_button.collidepoint((x, y)):
                     if difficulty == "Easy":
                         difficulty = "Medium"
@@ -91,6 +133,7 @@ def start_screen():
                         difficulty = "Hard"
                     else:
                         difficulty = "Easy"
+
 
 
 def display_score():
@@ -153,15 +196,25 @@ while running:
             x, y = pygame.mouse.get_pos()
             cell_x, cell_y = get_cell_position(x, y)
             user_sequence.append((cell_x, cell_y))
+            if user_sequence[-1] == sequence[len(user_sequence) - 1]:
+                if audio_on:
+                    correct_sound.play()
+            else:
+                if audio_on:
+                    wrong_sound.play()
             if len(user_sequence) == SEQUENCE_LENGTH:
                 if user_sequence == sequence:
-                    score += 1
+                    if audio_on:
+                        correct_sound.play()  # Adding Sound
+                    score += 1          #Score tracking system.
                     if score > high_score:
                         high_score = score
                     SEQUENCE_LENGTH += 1  # Increase sequence length
                     print(f"Correct Sequence! Score: {score}")
                     DISPLAY_TIME = max(0.1, DISPLAY_TIME - 0.1)  # Decrement DISPLAY_TIME, ensuring it doesn't go below 0.1
                 else:
+                    if audio_on:
+                        wrong_sound.play()
                     game_over_screen()
                     score = 0  # Reset score to zero if sequence is incorrect
                     SEQUENCE_LENGTH = 2
@@ -169,7 +222,12 @@ while running:
                     print(f"Wrong Sequence! Score reset to zero.")
                 last_update_time = pygame.time.get_ticks()  # Reset these two values
                 update_delay = DISPLAY_TIME * 1000
-                sequence = [(random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1)) for _ in range(SEQUENCE_LENGTH)]
+                
+                # Sequence generation modification
+                sequence = [generate_new_cell()]
+                for _ in range(1, SEQUENCE_LENGTH):
+                    sequence.append(generate_new_cell(sequence[-1]))
+
                 user_sequence = []
                 show_sequence = True
 
