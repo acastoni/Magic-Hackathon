@@ -20,3 +20,23 @@ Added a score and highscore system to the game.
 Version 1.3:
 
 Changed art for all aspects of the game, logo, and squares art. 8 bit theme. Added audio for theme music, wrong choices, and correct choices.
+
+Final Hackathon Version!:
+
+Added diffculty functionality, animations, game over logo, sounds, exe compatibility, etc.
+
+
+Instrutions:
+The latest version of pygame is required to run the executable.
+Make sure to unzip the dist file into a folder as it is full of assests.
+Depending on your operating system, the executible will be called Popping Pumpkins.exe or Popping Pumpkins.app
+
+Make sure to install the latest version of pygame in your terminal. 
+-pip install pygame
+-pip install os
+
+It is a simple memory game where you must click the pumpkins in the order in which they are displayed.
+
+Enjoy the game!
+
+With more time, I would love to implement different rulesets to each color and add more colors in the future so that every game is unique!
